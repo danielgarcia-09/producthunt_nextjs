@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useContext } from "react";
+import { FirebaseContext } from '../../firebase';
 import Link from "next/link";
 import Search from "../ui/Search";
 import Navigation from "./Navigation";
@@ -30,7 +31,8 @@ const Logo = styled.p`
 `;
 
 const Header = () => {
-  const user = false;
+
+  const { user, firebase } = useContext(FirebaseContext);
 
   return (
     <header
@@ -66,9 +68,12 @@ const Header = () => {
                 css={css`
                   margin-right: 2rem;
                 `}
-              >Hello: Daniel</p>
+              >Hello: {user.displayName}</p>
 
-              <Button bgColor>Sign off</Button>
+              <Button
+                bgColor
+                onClick={()=> firebase.signOut()}
+              >Sign off</Button>
             </>
           ) : (
             <>
