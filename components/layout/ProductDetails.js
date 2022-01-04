@@ -1,6 +1,7 @@
 import React from "react";
 import styled from "@emotion/styled";
 import { formatDistanceToNow } from "date-fns";
+import Link from "next/link";
 
 const Product = styled.li`
   padding: 4rem;
@@ -21,6 +22,7 @@ const Title = styled.a`
   font-size: 2rem;
   font-weight: bold;
   margin: 0;
+  cursor: pointer;
 `;
 
 const DescriptionText = styled.p`
@@ -98,7 +100,11 @@ const ProductDetails = ({ product }) => {
         </div>
 
         <div>
-          <Title>{name}</Title>
+
+          <Link href={`/products/${id}`}>
+              <Title>{name}</Title>
+          </Link>
+          
 
           <DescriptionText>{description}</DescriptionText>
 
