@@ -1,6 +1,8 @@
 import firebase, { FirebaseContext } from '../firebase'
 import useAuth from '../hooks/useAuth'
 import '../public/styles/globals.css'
+import '../public/styles/app.css'
+
 
 function MyApp({ Component, pageProps }) {
 

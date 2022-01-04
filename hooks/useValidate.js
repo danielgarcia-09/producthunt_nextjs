@@ -11,7 +11,7 @@ const useValidate = (initialState, validate, func) => {
             const noErrors = Object.keys(errors).length === 0;
 
             if( noErrors ) {
-                func(); //* Login, sign on
+                func(); //* Login, sign on, etc
             }
 
             setSubmitForm(false);

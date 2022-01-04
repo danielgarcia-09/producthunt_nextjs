@@ -19,7 +19,7 @@ const Nav = styled.nav`
 `;
 
 const Navigation = () => {
-  const { user, firebase } = useContext(FirebaseContext);
+  const { user } = useContext(FirebaseContext);
 
   return (
     <Nav>
