@@ -1,13 +1,13 @@
 import { css } from '@emotion/react';
 
-const Error404 = () => {
+const Error404 = ({message}) => {
     return (
         <h1
             css={css`
-                margin-top: 5rem;
+                margin-top: 15rem;
                 text-align: center;
             `}
-        >Product Not Found</h1>
+        >{message}</h1>
     );
 }
  

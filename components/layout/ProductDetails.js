@@ -111,7 +111,7 @@ const ProductDetails = ({ product }) => {
           <Comments>
             <div>
               <img src="/img/comment.png" />
-              <p>{comments.length} Comentarios</p>
+              <p>{comments.length} Comments</p>
             </div>
           </Comments>
 
