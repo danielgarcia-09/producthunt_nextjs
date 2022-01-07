@@ -18,12 +18,36 @@ const ProductContainer = styled.div`
   }
 `;
 
+const ProductCreator = styled.p`
+  padding: .5rem 2rem;
+  background-color: #DA552F;
+  color: #fff;
+  text-transform: uppercase;
+  font-weight:  bold;
+  display: inline-block;
+  text-align: center;
+`;
+
 const Product = () => {
+  //* Spinner block
+  const Spinner = styled.div`
+    margin-top: 15rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+
+  //* Spinner state
+  const [loading, setLoading] = useState(true);
+
   //* Component state
   const [product, setProduct] = useState({});
 
   //! Error state
   const [error, setError] = useState(false);
+
+  //? Comments state
+  const [comment, setComment] = useState({});
 
   //* Getting value from URL
   const router = useRouter();
@@ -40,6 +64,7 @@ const Product = () => {
       const getProduct = async () => {
         try {
           const productQuery = await firebase.getProduct(id);
+
           setProduct(productQuery);
 
           //* Stopping spinner 3 secs after getting product
@@ -48,6 +73,7 @@ const Product = () => {
           }, 3000);
         } catch (error) {
           setError(true);
+
           setTimeout(() => {
             setLoading(false);
           }, 3000);
@@ -55,7 +81,7 @@ const Product = () => {
       };
       getProduct();
     }
-  }, [id]);
+  }, [id, product]);
 
   //* Extracting values from product
   const {
@@ -68,18 +94,76 @@ const Product = () => {
     urlImage,
     votes,
     creator,
+    userVotes,
   } = product;
 
-  //* Spinner block
-  const Spinner = styled.div`
-    margin-top: 15rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  `;
+  //* Administrate y validate votes
+  const voteProduct = async () => {
+    if (!user) {
+      return router.push("/login");
+    }
 
-  //* Spinner state
-  const [loading, setLoading] = useState(true);
+    if (userVotes.includes(user.uid)) return;
+
+    //* obtain and add new vote
+    const newTotalVotes = votes + 1;
+
+    //* Save user id
+    const newUserVotes = [...userVotes, user.uid];
+
+    try {
+      //* update in DB
+      await firebase.updateVoteProduct(id, { newTotalVotes, newUserVotes });
+
+      //* update state
+      setProduct({
+        ...product,
+        votes: newTotalVotes,
+        userVotes: newUserVotes,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  //* Identify if new comment belongs to the product's creator
+  const isCreator = id => (creator.id === id) ? true : false;
+
+  //* Func to create new comment
+  const commentChange = (e) => {
+    setComment({
+      ...comment,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  //* Func to add new comment to state
+  const addComment = async (e) => {
+    e.preventDefault();
+
+    if (!user) {
+      return router.push("/login");
+    }
+
+    //* extra info
+    comment.userId = user.uid;
+    comment.userName = user.displayName;
+
+    //* add it to comment state
+    const newComments = [...comments, comment];
+
+    try {
+      //* update DB
+      await firebase.addCommentProduct(id, newComments);
+      //* update state
+      setProduct({
+        ...product,
+        comments: newComments,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <Layout>
@@ -119,9 +203,13 @@ const Product = () => {
                   <>
                     <h2>Add your comment</h2>
 
-                    <form>
+                    <form onSubmit={addComment}>
                       <FormBlock>
-                        <input type="text" name="message" />
+                        <input
+                          type="text"
+                          name="message"
+                          onChange={commentChange}
+                        />
                       </FormBlock>
 
                       <InputSubmit type="submit" value="Add Comment" />
@@ -136,13 +224,30 @@ const Product = () => {
                 >
                   Comments
                 </h2>
+                {comments.length === 0 ? 'No comments' : (
+                  <ul>
+                  {comments.map((cmt, i) => (
+                    <li
+                      key={`${cmt.userId}-${i}`}
+                      css={css`
+                        border: 1px solid #e1e1e1;
+                        padding: 2rem;
 
-                {comments.map((comment) => {
-                  <li>
-                    <p>{comment.name}</p>
-                    <p>Written by: {comment.userName}</p>
-                  </li>;
-                })}
+                      `}
+                    >
+                      <p>{cmt.message}</p>
+                      <p>Written by: <span
+                        css={css`
+                          font-weight: bold
+                        `}
+                      > {cmt.userName}</span></p>
+
+                      { isCreator( cmt.userId ) && <ProductCreator>Is Owner</ProductCreator>}
+                    </li>
+                  ))}
+                </ul>
+                )}
+                
               </div>
 
               <aside>
@@ -160,12 +265,10 @@ const Product = () => {
                       text-align: center;
                     `}
                   >
-                    {votes} Votes
+                    {votes > 9 ? `${votes} Votes` : `${votes} Vote`}
                   </p>
 
-                  { user && (
-                    <Button>Vote</Button>
-                  )}
+                  {user && <Button onClick={voteProduct}>Vote</Button>}
                 </div>
               </aside>
             </ProductContainer>

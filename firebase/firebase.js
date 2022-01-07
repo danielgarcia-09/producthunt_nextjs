@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { addDoc, collection, doc, getDoc, getDocs, getFirestore, orderBy, query } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, getDocs, getFirestore, orderBy, query, updateDoc } from 'firebase/firestore';
 import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import firebaseConfig from "./config";
 
@@ -64,6 +64,29 @@ class Firebase {
         } else {
             throw new Error('no such product')
         }
+    }
+
+    //* Update votes from product
+    async updateVoteProduct( id, obj ) {
+
+        //* Extracting product's votes and new total of votes
+        const { newTotalVotes, newUserVotes } = obj;
+
+        const productRef = doc(this.db, 'products', id);
+
+        return await updateDoc(productRef, {
+            votes: newTotalVotes,
+            userVotes: newUserVotes
+        })
+    }
+
+    //* add and update comments from product
+    async addCommentProduct( id, comments ) {
+        const productRef = doc(this.db, 'products', id);
+
+        return await updateDoc(productRef, {
+            comments
+        })
     }
 }
 

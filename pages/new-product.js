@@ -47,6 +47,7 @@ export default function NewProduct() {
         id: user.uid,
         name: user.displayName,
       },
+      userVotes: []
     };
 
     //* Inserting in DB
