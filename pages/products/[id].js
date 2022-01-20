@@ -19,11 +19,11 @@ const ProductContainer = styled.div`
 `;
 
 const ProductCreator = styled.p`
-  padding: .5rem 2rem;
-  background-color: #DA552F;
+  padding: 0.5rem 2rem;
+  background-color: #da552f;
   color: #fff;
   text-transform: uppercase;
-  font-weight:  bold;
+  font-weight: bold;
   display: inline-block;
   text-align: center;
 `;
@@ -49,6 +49,9 @@ const Product = () => {
   //? Comments state
   const [comment, setComment] = useState({});
 
+  //*  Consult DB state
+  const [consultDB, setConsultDB] = useState(true);
+
   //* Getting value from URL
   const router = useRouter();
   const {
@@ -60,12 +63,13 @@ const Product = () => {
 
   useEffect(() => {
     //* To check id isn't undefined
-    if (id) {
+    if (id && consultDB) {
       const getProduct = async () => {
         try {
           const productQuery = await firebase.getProduct(id);
 
           setProduct(productQuery);
+          setConsultDB(false);
 
           //* Stopping spinner 3 secs after getting product
           setTimeout(() => {
@@ -80,8 +84,11 @@ const Product = () => {
         }
       };
       getProduct();
+    } else {
+      setError(true);
+      setConsultDB(false);
     }
-  }, [id, product]);
+  }, [id]);
 
   //* Extracting values from product
   const {
@@ -121,13 +128,16 @@ const Product = () => {
         votes: newTotalVotes,
         userVotes: newUserVotes,
       });
+
+      //* there's a new vote, so you have to consult the DB again
+      setConsultDB(true);
     } catch (error) {
       console.log(error);
     }
   };
 
   //* Identify if new comment belongs to the product's creator
-  const isCreator = id => (creator.id === id) ? true : false;
+  const isCreator = (id) => (creator.id === id ? true : false);
 
   //* Func to create new comment
   const commentChange = (e) => {
@@ -145,6 +155,8 @@ const Product = () => {
       return router.push("/login");
     }
 
+    if (!comment.message ||comment.message.trim() === "") return;
+
     //* extra info
     comment.userId = user.uid;
     comment.userName = user.displayName;
@@ -155,11 +167,39 @@ const Product = () => {
     try {
       //* update DB
       await firebase.addCommentProduct(id, newComments);
+
       //* update state
       setProduct({
         ...product,
         comments: newComments,
       });
+
+      //* there's a new comment, so you have to consult the DB again
+      setConsultDB(true);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  //* Func to check if owner can delete project
+  const canDeleteProject = () => {
+    if (!user) return false;
+
+    if (creator.id === user.uid) {
+      return true;
+    }
+  };
+
+  //! Delete product
+  const deleteProduct = async () => {
+    if (!user) return router.push("/login");
+
+    if (creator.id !== user.uid) {
+      return router.push("/");
+    }
+    try {
+      await firebase.deleteProduct(id);
+      router.push("/");
     } catch (error) {
       console.log(error);
     }
@@ -224,30 +264,38 @@ const Product = () => {
                 >
                   Comments
                 </h2>
-                {comments.length === 0 ? 'No comments' : (
+                {comments.length === 0 ? (
+                  "No comments"
+                ) : (
                   <ul>
-                  {comments.map((cmt, i) => (
-                    <li
-                      key={`${cmt.userId}-${i}`}
-                      css={css`
-                        border: 1px solid #e1e1e1;
-                        padding: 2rem;
-
-                      `}
-                    >
-                      <p>{cmt.message}</p>
-                      <p>Written by: <span
+                    {comments.map((cmt, i) => (
+                      <li
+                        key={`${cmt.userId}-${i}`}
                         css={css`
-                          font-weight: bold
+                          border: 1px solid #e1e1e1;
+                          padding: 2rem;
                         `}
-                      > {cmt.userName}</span></p>
+                      >
+                        <p>{cmt.message}</p>
+                        <p>
+                          Written by:{" "}
+                          <span
+                            css={css`
+                              font-weight: bold;
+                            `}
+                          >
+                            {" "}
+                            {cmt.userName}
+                          </span>
+                        </p>
 
-                      { isCreator( cmt.userId ) && <ProductCreator>Is Owner</ProductCreator>}
-                    </li>
-                  ))}
-                </ul>
+                        {isCreator(cmt.userId) && (
+                          <ProductCreator>Is Owner</ProductCreator>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
                 )}
-                
               </div>
 
               <aside>
@@ -272,6 +320,10 @@ const Product = () => {
                 </div>
               </aside>
             </ProductContainer>
+
+            {canDeleteProject() && (
+              <Button onClick={deleteProduct}>Delete Product</Button>
+            )}
           </div>
         )}
       </>

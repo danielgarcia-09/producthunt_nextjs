@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { addDoc, collection, doc, getDoc, getDocs, getFirestore, orderBy, query, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, getFirestore, orderBy, query, updateDoc } from 'firebase/firestore';
 import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import firebaseConfig from "./config";
 
@@ -44,9 +44,9 @@ class Firebase {
     }
 
     //* Get products sorted
-    async getProducts() {
+    async getProducts( order = null) {
 
-        const q = query(collection(this.db, 'products'), orderBy('createdAt', 'desc'));
+        const q = query(collection(this.db, 'products'), orderBy((order) ? order : 'createdAt' , 'desc'));
 
         return await getDocs(q);
         
@@ -87,6 +87,13 @@ class Firebase {
         return await updateDoc(productRef, {
             comments
         })
+    }
+
+    //! Delete product
+    async deleteProduct( id ) {
+        const productRef = doc(this.db, 'products', id);
+
+        return await deleteDoc(productRef);
     }
 }
 
